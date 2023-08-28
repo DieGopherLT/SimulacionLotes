@@ -67,6 +67,9 @@ namespace SimulacionLotes
 
                 await container.PendingBatches.Writer.WriteAsync(batches.Count);
                 await container.OnFinishedProcesses.Writer.WriteAsync(batchTitle);
+                await container.OnExecutingProcess.Writer.WriteAsync(string.Empty);
+                await container.OnWaitingProcesses.Writer.WriteAsync($"\n\n\tCargando lote {batchNumber}...");
+                await Task.Delay(1500);
 
                 while (currentBatch.Count > 0) // Desencolamiento de procesos
                 {
@@ -158,13 +161,13 @@ namespace SimulacionLotes
             string onWaitRtbText = string.Empty;
 
             if (copy.Count > 0)
-                onWaitRtbText += batchTitle + Environment.NewLine;
-
-            while (copy.Count > 0)
             {
-                Process process = copy.Dequeue();
-                onWaitRtbText += process.ToString();
+                onWaitRtbText += batchTitle + Environment.NewLine;
+                onWaitRtbText += copy.Dequeue().ToString();
+                onWaitRtbText += $"\n\n\t{copy.Count} procesos pendientes";
+
             }
+
             return onWaitRtbText;
         }
 
