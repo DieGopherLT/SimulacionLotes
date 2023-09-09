@@ -88,13 +88,21 @@ namespace SimulacionLotes
 
                     await ExecuteProcess(currentProcess, container);
 
+                    // En caso de que haya una interrupción, el proceso se vuelve a encolar
                     if (interruptButtonCTS.Token.IsCancellationRequested)
                     {
                         currentBatch.Enqueue(currentProcess);
+                        // Los tokens son de un solo uso, tras el uso he de reasignarlo a una nueva instancia
                         interruptButtonCTS = new();
                         continue;
                     }
 
+                    /*
+                     * Si el if de arriba se ejecuta, este código consiguiente no se ejecuta.
+                     * 
+                     * Solamente se ejecuta cuando un proceso termina, ya sea por error o 
+                     * con normalidad.
+                     */
                     currentProcess.Time = currentProcess.ExecutionTime;
                     await container.OnFinishedProcesses.Writer.WriteAsync(currentProcess.ToStringSolved());
                 }
@@ -198,18 +206,20 @@ namespace SimulacionLotes
 
             int timeToFinishProcess = process.RemainingTime;
 
+            // Los tokens de cancelación que provienen de sus respectivos sources
             CancellationToken cancelButtonCancellationToken = cancelButtonCTS.Token;
             CancellationToken interruptButtonCancellationToken = interruptButtonCTS.Token;
 
             for (int i = 0; i < timeToFinishProcess; i++)
             {
-                if (cancelButtonCancellationToken.IsCancellationRequested)
+                if (cancelButtonCancellationToken.IsCancellationRequested) // Listeenr para cancelaciones
                 {
                     process.HasError = true;
+                    // Los tokens son de un solo uso, tras el uso he de reasignarlo a una nueva instancia
                     cancelButtonCTS = new();
                     break;
                 }
-                if (interruptButtonCancellationToken.IsCancellationRequested)
+                if (interruptButtonCancellationToken.IsCancellationRequested) // Listener para interrupciones
                 {
                     break;
                 }
