@@ -45,7 +45,7 @@
         public string ToStringSolved()
         {
             string operationSolved = SolveOperation();
-            string completedIn = HasError ? string.Empty : $"Completado en: {Time} segundos";
+            string completedIn = HasError ? "Proceso cancelado" : $"Completado en: {Time} segundos";
             return
             $@"
     ===========

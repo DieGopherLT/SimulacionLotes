@@ -9,8 +9,6 @@ namespace SimulacionLotes
 {
     public partial class MainForm : Form
     {
-        readonly Channel<bool> onCancelChannel = Channel.CreateUnbounded<bool>();
-
         static CancellationTokenSource cts = new CancellationTokenSource();
 
         private void CancelationButton_Click(object sender, EventArgs e)

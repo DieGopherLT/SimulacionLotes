@@ -95,14 +95,6 @@ namespace SimulacionLotes
             container.CloseChannels();
         }
 
-        private async Task ListenForCancelations(CancellationTokenSource cts)
-        {
-            await foreach (bool canCancel in onCancelChannel.Reader.ReadAllAsync())
-            {
-                cts.Cancel();
-            }
-        }
-
         /* Todas estas funciones que están en este formato, se ejecutan en un task/hilo dedicado y funcionan
          * como listeners, cuando un canal les manda información, ejecutan el código, pero mientras no reciben
          * nada, la ejecución se bloquea donde el await.
