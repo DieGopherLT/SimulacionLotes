@@ -42,6 +42,7 @@
             CronometerLabel = new Label();
             SecondsPassedLabel = new Label();
             CancellationButton = new Button();
+            InterruptButton = new Button();
             SuspendLayout();
             // 
             // label1
@@ -184,11 +185,24 @@
             CancellationButton.UseVisualStyleBackColor = true;
             CancellationButton.Click += CancelationButton_Click;
             // 
+            // InterruptButton
+            // 
+            InterruptButton.Enabled = false;
+            InterruptButton.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point);
+            InterruptButton.Location = new Point(323, 507);
+            InterruptButton.Name = "InterruptButton";
+            InterruptButton.Size = new Size(155, 33);
+            InterruptButton.TabIndex = 15;
+            InterruptButton.Text = "Interrumpir Proceso";
+            InterruptButton.UseVisualStyleBackColor = true;
+            InterruptButton.Click += InterruptButton_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(816, 550);
+            Controls.Add(InterruptButton);
             Controls.Add(CancellationButton);
             Controls.Add(SecondsPassedLabel);
             Controls.Add(CronometerLabel);
@@ -225,5 +239,6 @@
         private Label CronometerLabel;
         private Label SecondsPassedLabel;
         private Button CancellationButton;
+        private Button InterruptButton;
     }
 }

@@ -9,11 +9,17 @@ namespace SimulacionLotes
 {
     public partial class MainForm : Form
     {
-        static CancellationTokenSource cts = new CancellationTokenSource();
+        static CancellationTokenSource cancelButtonCTS = new();
+        static CancellationTokenSource interruptButtonCTS = new();
 
         private void CancelationButton_Click(object sender, EventArgs e)
         {
-            cts.Cancel();
+            cancelButtonCTS.Cancel();
+        }
+
+        private void InterruptButton_Click(object obj, EventArgs e) 
+        { 
+            interruptButtonCTS.Cancel(); 
         }
     }
 }

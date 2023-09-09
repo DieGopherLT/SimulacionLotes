@@ -45,6 +45,7 @@ namespace SimulacionLotes
             Task updateFinishingProcess = Task.Run(() => UpdateOnFinishedProcessTask(container.OnFinishedProcesses));
 
             CancellationButton.Enabled = true;
+            InterruptButton.Enabled = true;
 
             // Bloqueamos la ejecución del programa hasta que todas estas tareas terminen
             await Task.WhenAll(
@@ -56,6 +57,7 @@ namespace SimulacionLotes
             // Habilitamos el botón para obtener nuestro 'ticket' de los resultados de la operación
             GenerateResultsButton.Enabled = true;
             CancellationButton.Enabled = false;
+            InterruptButton.Enabled = false;
         }
 
         /* 
@@ -85,6 +87,13 @@ namespace SimulacionLotes
                     await container.OnExecutingProcess.Writer.WriteAsync(currentProcess.ToString());
 
                     int timeProcessFinishedInSeconds = await ExecuteProcess(currentProcess, container);
+
+                    if (interruptButtonCTS.Token.IsCancellationRequested)
+                    {
+                        currentBatch.Enqueue(currentProcess);
+                        interruptButtonCTS = new();
+                        continue;
+                    }
 
                     currentProcess.Time = timeProcessFinishedInSeconds;
                     await container.OnFinishedProcesses.Writer.WriteAsync(currentProcess.ToStringSolved());
@@ -188,14 +197,19 @@ namespace SimulacionLotes
             int processTME = process.TME;
             int timeToFinishProcess = numberGenerator.Next(processTME - 3, processTME);
             // Genero un tiempo para que se finalice el proceso con ligera variación del TME
-            CancellationToken token = cts.Token;
+            CancellationToken cancelButtonCancellationToken = cancelButtonCTS.Token;
+            CancellationToken interruptButtonCancellationToken = interruptButtonCTS.Token;
 
             for (int i = 0; i < timeToFinishProcess; i++)
             {
-                if (token.IsCancellationRequested)
+                if (cancelButtonCancellationToken.IsCancellationRequested)
                 {
                     process.HasError = true;
-                    cts = new CancellationTokenSource();
+                    cancelButtonCTS = new();
+                    break;
+                }
+                if (interruptButtonCancellationToken.IsCancellationRequested)
+                {
                     break;
                 }
                 await Task.Delay(1000); // Reducir o remover para acelerar la velocidad de ejecución del programa
