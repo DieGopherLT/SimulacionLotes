@@ -1,5 +1,6 @@
 namespace SimulacionLotes
 {
+    using Batch = Queue<Process>;
     public partial class MainForm : Form
     {
         Random numberGenerator = new Random();
@@ -17,7 +18,8 @@ namespace SimulacionLotes
             if (int.TryParse(processesAmount, out int processes))
             {
                 DisableControls();
-                Queue<Queue<Process>> batches = GenerateBatches(processes);
+                (Queue<Batch> batches, string batchesDocument) = GenerateBatches(processes);
+                WriteOnFile("lotes.txt", batchesDocument);
                 StartBatchingProcessing(batches);
             }
             else

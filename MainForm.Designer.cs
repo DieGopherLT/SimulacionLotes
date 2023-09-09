@@ -41,6 +41,7 @@
             GenerateResultsButton = new Button();
             CronometerLabel = new Label();
             SecondsPassedLabel = new Label();
+            CancellationButton = new Button();
             SuspendLayout();
             // 
             // label1
@@ -171,11 +172,24 @@
             SecondsPassedLabel.TabIndex = 13;
             SecondsPassedLabel.Text = "0";
             // 
+            // CancellationButton
+            // 
+            CancellationButton.Enabled = false;
+            CancellationButton.Font = new Font("Segoe UI", 11.25F, FontStyle.Regular, GraphicsUnit.Point);
+            CancellationButton.Location = new Point(323, 468);
+            CancellationButton.Name = "CancellationButton";
+            CancellationButton.Size = new Size(155, 33);
+            CancellationButton.TabIndex = 14;
+            CancellationButton.Text = "Cancelar proceso";
+            CancellationButton.UseVisualStyleBackColor = true;
+            CancellationButton.Click += CancelationButton_Click;
+            // 
             // MainForm
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(816, 550);
+            Controls.Add(CancellationButton);
             Controls.Add(SecondsPassedLabel);
             Controls.Add(CronometerLabel);
             Controls.Add(GenerateResultsButton);
@@ -210,5 +224,6 @@
         private Button GenerateResultsButton;
         private Label CronometerLabel;
         private Label SecondsPassedLabel;
+        private Button CancellationButton;
     }
 }

@@ -1,5 +1,4 @@
-﻿
-namespace SimulacionLotes
+﻿namespace SimulacionLotes
 {
     /*
      * Esta clase es una abstracción para tener los datos que requiere cada proceso en un tipo de dato.
@@ -16,6 +15,7 @@ namespace SimulacionLotes
         public required string Operation { get; set; }
         public int TME { get; set; }
         public int Time { get; set; }
+        public bool HasError { get; set; }
 
         /*
          * Es la representación en string de un proceso pendiente y en ejecución.
@@ -45,13 +45,14 @@ namespace SimulacionLotes
         public string ToStringSolved()
         {
             string operationSolved = SolveOperation();
+            string completedIn = HasError ? string.Empty : $"Completado en: {Time} segundos";
             return
             $@"
     ===========
     ID: {ID}
     Iniciado por: {ProgrammerName}
     {operationSolved}
-    Completado en: {Time} segundos
+    {completedIn}
     ===========
             ";
         }
@@ -59,6 +60,9 @@ namespace SimulacionLotes
         // Resuelve la operación de cada proceso
         private string SolveOperation()
         {
+            if (HasError)
+                return "ERROR";
+
             string[] splittedOperation = Operation.Split(" ");
             double result = 0;
 

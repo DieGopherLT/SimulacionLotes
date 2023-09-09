@@ -2,6 +2,7 @@
 
 namespace SimulacionLotes
 {
+    using Batch = Queue<Process>;
     // En este partial tengo toda la lógica prinicpal relacionada al procesamiento por lotes
     public partial class MainForm : Form
     {
@@ -27,7 +28,7 @@ namespace SimulacionLotes
             return container;
         }
 
-        private async void StartBatchingProcessing(Queue<Queue<Process>> batches)
+        private async void StartBatchingProcessing(Queue<Batch> batches)
         {
             ChannelContainer container = CreateChannels();
 
@@ -35,12 +36,15 @@ namespace SimulacionLotes
             // A diferencia de la clase Thread, estos son más sencillos de usar y eficientes, pero menos controlables
             Task batchingHandler = Task.Run(() => HandleBatches(batches, container));
 
+            // Todos los de aqui abajo son para actualizar la UI
             Task updateGlobalClock = Task.Run(() => UpdateGlobalClockTask(container.GlobalClock));
             Task updatePendingBatches = Task.Run(() => UpdatePendingBatchesTask(container.PendingBatches));
 
             Task updateExecutionProcesses = Task.Run(() => UpdateOnExecutionProcessTask(container.OnExecutingProcess));
             Task updateWaitingProcesses = Task.Run(() => UpdateOnWaitingProcessTask(container.OnWaitingProcesses));
             Task updateFinishingProcess = Task.Run(() => UpdateOnFinishedProcessTask(container.OnFinishedProcesses));
+
+            CancellationButton.Enabled = true;
 
             // Bloqueamos la ejecución del programa hasta que todas estas tareas terminen
             await Task.WhenAll(
@@ -51,18 +55,19 @@ namespace SimulacionLotes
 
             // Habilitamos el botón para obtener nuestro 'ticket' de los resultados de la operación
             GenerateResultsButton.Enabled = true;
+            CancellationButton.Enabled = false;
         }
 
         /* 
          *  Esta función se encarga de todo lo relacionado a los lotes, para actualizar la UI, envía datos
          *  a los respectivos canales encargados de una parte de la UI.
          */
-        private async void HandleBatches(Queue<Queue<Process>> batches, ChannelContainer container)
+        private async Task HandleBatches(Queue<Batch> batches, ChannelContainer container)
         {
             int batchNumber = 1;
             while (batches.Count > 0) // Desencolamiento de lotes
             {
-                Queue<Process> currentBatch = batches.Dequeue();
+                Batch currentBatch = batches.Dequeue();
                 string batchTitle = $"********* Lote {batchNumber} **********";
 
                 await container.PendingBatches.Writer.WriteAsync(batches.Count);
@@ -88,6 +93,14 @@ namespace SimulacionLotes
             }
             await container.OnExecutingProcess.Writer.WriteAsync(string.Empty);
             container.CloseChannels();
+        }
+
+        private async Task ListenForCancelations(CancellationTokenSource cts)
+        {
+            await foreach (bool canCancel in onCancelChannel.Reader.ReadAllAsync())
+            {
+                cts.Cancel();
+            }
         }
 
         /* Todas estas funciones que están en este formato, se ejecutan en un task/hilo dedicado y funcionan
@@ -154,10 +167,10 @@ namespace SimulacionLotes
          * Debido a que los procesos andan encolados, tengo que hacer un desencolado para poder
          * mostrarlos en pantalla.
          */
-        private string GenerateOnWaitProcessesText(Queue<Process> processes, string batchTitle)
+        private string GenerateOnWaitProcessesText(Batch processes, string batchTitle)
         {
             // Hago una copia del lote para no alterar la que se usa para el procesamiento
-            Queue<Process> copy = new Queue<Process>(processes);
+            Batch copy = new Batch(processes);
             string onWaitRtbText = string.Empty;
 
             if (copy.Count > 0)
@@ -165,7 +178,6 @@ namespace SimulacionLotes
                 onWaitRtbText += batchTitle + Environment.NewLine;
                 onWaitRtbText += copy.Dequeue().ToString();
                 onWaitRtbText += $"\n\n\t{copy.Count} procesos pendientes";
-
             }
 
             return onWaitRtbText;
@@ -180,16 +192,24 @@ namespace SimulacionLotes
          */
         private async Task<int> ExecuteProcess(Process process, ChannelContainer container)
         {
+            const int CLOCK_INCREMENT = 1;
             int processTME = process.TME;
             int timeToFinishProcess = numberGenerator.Next(processTME - 3, processTME);
             // Genero un tiempo para que se finalice el proceso con ligera variación del TME
+            CancellationToken token = cts.Token;
 
             for (int i = 0; i < timeToFinishProcess; i++)
             {
+                if (token.IsCancellationRequested)
+                {
+                    process.HasError = true;
+                    cts = new CancellationTokenSource();
+                    break;
+                }
                 await Task.Delay(1000); // Reducir o remover para acelerar la velocidad de ejecución del programa
                 process.TME -= 1;
                 await container.OnExecutingProcess.Writer.WriteAsync(process.ToString());
-                await container.GlobalClock.Writer.WriteAsync(1);
+                await container.GlobalClock.Writer.WriteAsync(CLOCK_INCREMENT);
             }
 
             return timeToFinishProcess;

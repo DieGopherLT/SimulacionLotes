@@ -2,6 +2,7 @@
 
 namespace SimulacionLotes
 {
+    using Batch = Queue<Process>;
     public partial class MainForm : Form
     {
         /*
@@ -9,12 +10,12 @@ namespace SimulacionLotes
          * Una cola de procesos es el equivalente de un lote.
          * Los lotes van en una cola para fácilmente ejecutarlos en el órden que se crearon.
          */
-        private Queue<Queue<Process>> GenerateBatches(int processesAmount)
+        private ValueTuple<Queue<Batch>, string> GenerateBatches(int processesAmount)
         {
             const int LIMIT_PER_BATCH = 5;
             int numberOfBatches = CalculateAmountOfBatches(processesAmount, LIMIT_PER_BATCH);
 
-            Queue<Queue<Process>> batches = new Queue<Queue<Process>>(numberOfBatches);
+            Queue<Batch> batches = new Queue<Batch>(numberOfBatches);
             List<int> batchSizes = GenerateBatchesSizes(processesAmount, LIMIT_PER_BATCH);
 
             int processId = 1;
@@ -22,7 +23,7 @@ namespace SimulacionLotes
             string documentText = string.Empty;
             foreach (int batchSize in batchSizes)
             {
-                Queue<Process> batch = new Queue<Process>(LIMIT_PER_BATCH);
+                Batch batch = new Batch(LIMIT_PER_BATCH);
                 documentText += $"********** Lote {batchNumber} **********\n";
                 for (int i = 0; i < batchSize; i++)
                 {
@@ -34,14 +35,8 @@ namespace SimulacionLotes
                 batches.Enqueue(batch);
                 batchNumber++;
             }
-            /*
-             * Escribiendo los lotes a un archivo, un side effect de esta función
-             * Mi sentido de las buenas prácticas hace que me sienta mal por esta linea de código
-             * Todo por que no me salio una deep copy del batches. :(
-             */
-            WriteOnFile("lotes.txt", documentText);
 
-            return batches;
+            return (batches, documentText);
         }
 
         /*
