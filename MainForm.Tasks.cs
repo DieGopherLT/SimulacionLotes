@@ -84,9 +84,9 @@ namespace SimulacionLotes
                     string pendingProcesses = GenerateOnWaitProcessesText(currentBatch, batchTitle);
 
                     await container.OnWaitingProcesses.Writer.WriteAsync(pendingProcesses);
-                    await container.OnExecutingProcess.Writer.WriteAsync(currentProcess.ToString());
+                    await container.OnExecutingProcess.Writer.WriteAsync(currentProcess.ToStringExecuting());
 
-                    int timeProcessFinishedInSeconds = await ExecuteProcess(currentProcess, container);
+                    await ExecuteProcess(currentProcess, container);
 
                     if (interruptButtonCTS.Token.IsCancellationRequested)
                     {
@@ -95,7 +95,7 @@ namespace SimulacionLotes
                         continue;
                     }
 
-                    currentProcess.Time = timeProcessFinishedInSeconds;
+                    currentProcess.Time = currentProcess.ExecutionTime;
                     await container.OnFinishedProcesses.Writer.WriteAsync(currentProcess.ToStringSolved());
                 }
                 batchNumber++;
@@ -177,7 +177,7 @@ namespace SimulacionLotes
             if (copy.Count > 0)
             {
                 onWaitRtbText += batchTitle + Environment.NewLine;
-                onWaitRtbText += copy.Dequeue().ToString();
+                onWaitRtbText += copy.Dequeue().ToStringPending();
                 onWaitRtbText += $"\n\n\t{copy.Count} procesos pendientes";
             }
 
@@ -191,12 +191,13 @@ namespace SimulacionLotes
          * 
          * Todo esto un delay de un segundo que hace que se vea que el programa ocurre segundo a segundo.
          */
-        private async Task<int> ExecuteProcess(Process process, ChannelContainer container)
+        private async Task ExecuteProcess(Process process, ChannelContainer container)
         {
-            const int CLOCK_INCREMENT = 1;
-            int processTME = process.TME;
-            int timeToFinishProcess = numberGenerator.Next(processTME - 3, processTME);
-            // Genero un tiempo para que se finalice el proceso con ligera variación del TME
+            const int INCREMENT = 1;
+            const int DECREMENT = 1;
+
+            int timeToFinishProcess = process.RemainingTime;
+
             CancellationToken cancelButtonCancellationToken = cancelButtonCTS.Token;
             CancellationToken interruptButtonCancellationToken = interruptButtonCTS.Token;
 
@@ -212,13 +213,12 @@ namespace SimulacionLotes
                 {
                     break;
                 }
-                await Task.Delay(1000); // Reducir o remover para acelerar la velocidad de ejecución del programa
-                process.TME -= 1;
-                await container.OnExecutingProcess.Writer.WriteAsync(process.ToString());
-                await container.GlobalClock.Writer.WriteAsync(CLOCK_INCREMENT);
+                await Task.Delay(1000); 
+                process.RemainingTime -= DECREMENT;
+                process.ExecutionTime += INCREMENT;
+                await container.OnExecutingProcess.Writer.WriteAsync(process.ToStringExecuting());
+                await container.GlobalClock.Writer.WriteAsync(INCREMENT);
             }
-
-            return timeToFinishProcess;
         }
     }
 }

@@ -103,14 +103,19 @@ namespace SimulacionLotes
             int firstOperand = numberGenerator.Next(1, 11);
             int secondOperand = numberGenerator.Next(1, 11);
 
-            int randomTME = numberGenerator.Next(4, 14);
+            const int MIN_TIME_EXECUTION = 4;
+            const int MAX_TIME_EXECUTION = 14;
+
+            int randomTME = numberGenerator.Next(MIN_TIME_EXECUTION, MAX_TIME_EXECUTION);
 
             return new Process
             {
                 ID = processId,
                 ProgrammerName = $"{faker.Name.FirstName()}",
                 Operation = $"{firstOperand} {randomOperation} {secondOperand}",
-                TME = randomTME,
+                MaxTimeToExecute = randomTME,
+                RemainingTime = randomTME,
+                ExecutionTime = 0
             };
         }
     }

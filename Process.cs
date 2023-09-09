@@ -13,7 +13,9 @@
         public int ID { get; set; }
         public required string ProgrammerName { get; set; }
         public required string Operation { get; set; }
-        public int TME { get; set; }
+        public int MaxTimeToExecute { get; set; }
+        public int RemainingTime { get; set; }
+        public int ExecutionTime { get; set; }
         public int Time { get; set; }
         public bool HasError { get; set; }
 
@@ -23,7 +25,7 @@
          * La identación está así ya que al usar string interpolation, los espacios que tiene aquí en el editor
          * se reflejan en la UI, así es como considero se ve mejor.
          */
-        public override string ToString()
+        public string ToStringPending()
         {
             return 
             $@"
@@ -31,7 +33,22 @@
     ID: {ID}
     Iniciado por: {ProgrammerName}
     Operacion: {Operation}
-    TME: {TME}
+    TME: {MaxTimeToExecute}
+    ===========
+            ";
+        }
+
+        public string ToStringExecuting()
+        {
+            return
+            $@"
+    ===========
+    ID: {ID}
+    Iniciado por: {ProgrammerName}
+    Operacion: {Operation}
+    TME: {MaxTimeToExecute}
+    Tiempo de ejecución: {ExecutionTime}
+    Tiempo faltante: {RemainingTime}
     ===========
             ";
         }
